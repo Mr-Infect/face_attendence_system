@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Network Monitor - Home Network Control</title>
+    <meta name="description" content="Monitor and control your home IoT devices with real-time traffic analysis and power consumption tracking">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <circle cx="12" cy="12" r="8"/>
+                    <circle cx="12" cy="12" r="11"/>
+                </svg>
+                <h1>IoT Network Monitor</h1>
+            </div>
+            <nav class="nav">
+                <button class="nav-btn active" data-page="traffic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    Traffic Monitor
+                </button>
+                <button class="nav-btn" data-page="analytics">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="20" x2="12" y2="10"/>
+                        <line x1="18" y1="20" x2="18" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="16"/>
+                    </svg>
+                    Analytics
+                </button>
+                <button class="nav-btn" data-page="devices">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2"/>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                    </svg>
+                    Devices
+                </button>
+            </nav>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/>
+                    <line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Traffic Monitor Page -->
+        <section id="traffic-page" class="page active">
+            <div class="page-header">
+                <h2>Real-Time Network Traffic</h2>
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>Monitoring Active</span>
+                </div>
+            </div>
+
+            <div class="traffic-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">↓</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Download</span>
+                        <span class="stat-value" id="downloadSpeed">0 KB/s</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">↑</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Upload</span>
+                        <span class="stat-value" id="uploadSpeed">0 KB/s</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Active Devices</span>
+                        <span class="stat-value" id="activeDevices">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔒</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Blocked</span>
+                        <span class="stat-value" id="blockedCount">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="traffic-controls">
+                <input type="text" id="trafficSearch" class="search-input" placeholder="Search by device name or activity...">
+                <select id="deviceFilter" class="filter-select">
+                    <option value="all">All Devices</option>
+                </select>
+            </div>
+
+            <div class="traffic-container">
+                <div class="traffic-list" id="trafficList">
+                    <!-- Traffic items will be dynamically added here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Page -->
+        <section id="analytics-page" class="page">
+            <div class="page-header">
+                <h2>Network Analytics</h2>
+                <div class="time-range">
+                    <button class="time-btn active" data-range="1h">1 Hour</button>
+                    <button class="time-btn" data-range="6h">6 Hours</button>
+                    <button class="time-btn" data-range="24h">24 Hours</button>
+                </div>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="chart-card large">
+                    <h3>Network Traffic Over Time</h3>
+                    <canvas id="trafficChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Traffic by Device</h3>
+                    <canvas id="deviceTrafficChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Power Consumption</h3>
+                    <canvas id="powerChart"></canvas>
+                </div>
+
+                <div class="stats-card">
+                    <h3>Network Summary</h3>
+                    <div class="summary-stats">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Data Today</span>
+                            <span class="summary-value" id="totalData">0 MB</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Average Speed</span>
+                            <span class="summary-value" id="avgSpeed">0 KB/s</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Power Usage</span>
+                            <span class="summary-value" id="totalPower">0 W</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Estimated Cost/Day</span>
+                            <span class="summary-value" id="estimatedCost">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Protocol Distribution</h3>
+                    <canvas id="protocolChart"></canvas>
+                </div>
+
+                <div class="stats-card">
+                    <h3>Top Communicators</h3>
+                    <div class="top-devices" id="topDevices">
+                        <!-- Top devices will be listed here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Devices Page -->
+        <section id="devices-page" class="page">
+            <div class="page-header">
+                <h2>Device Control Center</h2>
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="grid">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                    </button>
+                    <button class="view-btn" data-view="list">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"/>
+                            <line x1="8" y1="12" x2="21" y2="12"/>
+                            <line x1="8" y1="18" x2="21" y2="18"/>
+                            <line x1="3" y1="6" x2="3.01" y2="6"/>
+                            <line x1="3" y1="12" x2="3.01" y2="12"/>
+                            <line x1="3" y1="18" x2="3.01" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="devices-grid" id="devicesGrid">
+                <!-- Device cards will be dynamically added here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for confirmations -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <p id="modalMessage">Are you sure you want to perform this action?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="modalCancel">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/devices.js"></script>
+    <script src="js/traffic.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/controls.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
