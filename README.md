@@ -281,9 +281,5 @@ For live demos:
 * Show late override + report table
 * Highlight audit trail
 
----
 
-> Built for real institutions. Not a toy project.
-
-```
 
