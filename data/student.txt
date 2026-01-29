@@ -1,0 +1,4 @@
+student_id,name,class,roll_no
+student_001,Arjun Menon,CS-A,23
+student_002,Rahul Nair,CS-A,24
+student_003,Anjali Devi,CS-B,11
