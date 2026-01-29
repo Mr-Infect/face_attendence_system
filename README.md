@@ -266,12 +266,6 @@ Cybersecurity Engineer & AI Systems Builder
 
 ---
 
-## 📜 License
-
-MIT License (recommended)
-
----
-
 ## ⭐ Demo Tip
 
 For live demos:
@@ -280,6 +274,7 @@ For live demos:
 * Pre-load 3–5 students
 * Show late override + report table
 * Highlight audit trail
+
 
 
 
