@@ -20,7 +20,7 @@ This application provides a comprehensive solution for monitoring network traffi
 - **🌓 Light/Dark Themes** - Modern, sophisticated UI with theme switching
 - **🏠 15 Simulated Devices** - Realistic household IoT devices for testing and demonstration
 - **⚡ Power Tracking** - Monitor electricity consumption and estimated costs
-- **🔒 Security Controls** - Block suspicious device communications with one click
+- **🔒 Security Controls** - Block suspicious device communications with single click
 
 ## 🚀 Quick Start
 
