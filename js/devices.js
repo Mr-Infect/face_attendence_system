@@ -1,7 +1,8 @@
-// Device Simulation Engine
-// Defines 15 household IoT devices with realistic properties
+// Device Management System
+// Supports simulated, custom, and real devices with localStorage persistence
 
-const DEVICES = [
+// Simulated devices (defaults for demo/testing)
+const SIMULATED_DEVICES = [
     {
         id: 'laptop-001',
         name: 'Work Laptop',
@@ -280,56 +281,357 @@ const DEVICES = [
     }
 ];
 
+// Device Catalog Templates
+const DEVICE_CATALOG = [
+    {
+        name: 'Gaming Console',
+        type: 'Entertainment',
+        icon: '🎮',
+        manufacturer: 'Sony/Microsoft',
+        powerWatts: 200,
+        controllable: true,
+        servers: [
+            { host: 'playstation.net', ip: '23.66.213.11', purpose: 'Online gaming service' },
+            { host: 'xboxlive.com', ip: '65.55.42.23', purpose: 'Multiplayer gaming' },
+            { host: 'twitch.tv', ip: '151.101.2.167', purpose: 'Live streaming' }
+        ],
+        trafficPattern: { min: 100, max: 2000, burstChance: 0.4 }
+    },
+    {
+        name: 'Smart Lock',
+        type: 'Security',
+        icon: '🔒',
+        manufacturer: 'August',
+        powerWatts: 2,
+        controllable: true,
+        servers: [
+            { host: 'connect.august.com', ip: '52.203.111.90', purpose: 'Remote locking/unlocking' }
+        ],
+        trafficPattern: { min: 1, max: 5, burstChance: 0.05 }
+    },
+    {
+        name: 'Smart Printer',
+        type: 'Computer',
+        icon: '🖨️',
+        manufacturer: 'HP',
+        powerWatts: 40,
+        controllable: false,
+        servers: [
+            { host: 'hpconnected.com', ip: '15.72.194.8', purpose: 'Cloud printing services' }
+        ],
+        trafficPattern: { min: 5, max: 50, burstChance: 0.1 }
+    },
+    {
+        name: 'Baby Monitor',
+        type: 'Security',
+        icon: '👶',
+        manufacturer: 'Nanit',
+        powerWatts: 5,
+        controllable: false,
+        servers: [
+            { host: 'api.nanit.com', ip: '34.205.112.55', purpose: 'Video stream upload' }
+        ],
+        trafficPattern: { min: 50, max: 400, burstChance: 0.2 }
+    },
+    {
+        name: 'Smart Coffee Maker',
+        type: 'Smart Appliance',
+        icon: '☕',
+        manufacturer: 'Keurig',
+        powerWatts: 1400,
+        controllable: true,
+        servers: [
+            { host: 'iot.keurig.com', ip: '54.88.19.22', purpose: 'Remote brew control' }
+        ],
+        trafficPattern: { min: 1, max: 10, burstChance: 0.01 }
+    },
+    {
+        name: 'NAS Drive',
+        type: 'Computer',
+        icon: '💾',
+        manufacturer: 'Synology',
+        powerWatts: 30,
+        controllable: false,
+        servers: [
+            { host: 'quickconnect.to', ip: '13.226.155.99', purpose: 'Remote file access' },
+            { host: 'backblaze.com', ip: '104.16.2.5', purpose: 'Cloud backup' }
+        ],
+        trafficPattern: { min: 100, max: 5000, burstChance: 0.3 }
+    }
+];
+
+
+// Storage keys
+const STORAGE_KEYS = {
+    CUSTOM_DEVICES: 'iot_custom_devices',
+    REAL_DEVICES: 'iot_real_devices'
+};
+
+// Device arrays
+let customDevices = [];
+let realDevices = [];
+
+// Initialize device storage
+function initDeviceStorage() {
+    loadCustomDevices();
+    loadRealDevices();
+}
+
+// Load custom devices from localStorage
+function loadCustomDevices() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_DEVICES);
+        customDevices = stored ? JSON.parse(stored) : [];
+    } catch (error) {
+        console.error('Error loading custom devices:', error);
+        customDevices = [];
+    }
+}
+
+// Save custom devices to localStorage
+function saveCustomDevices() {
+    try {
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_DEVICES, JSON.stringify(customDevices));
+    } catch (error) {
+        console.error('Error saving custom devices:', error);
+        if (error.name === 'QuotaExceededError') {
+            alert('Storage quota exceeded. Please delete some devices.');
+        }
+    }
+}
+
+// Load real devices from localStorage
+function loadRealDevices() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEYS.REAL_DEVICES);
+        realDevices = stored ? JSON.parse(stored) : [];
+    } catch (error) {
+        console.error('Error loading real devices:', error);
+        realDevices = [];
+    }
+}
+
+// Save real devices to localStorage
+function saveRealDevices() {
+    try {
+        localStorage.setItem(STORAGE_KEYS.REAL_DEVICES, JSON.stringify(realDevices));
+    } catch (error) {
+        console.error('Error saving real devices:', error);
+    }
+}
+
+// Add custom device
+function addCustomDevice(deviceData) {
+    // Validate required fields
+    if (!deviceData.name || !deviceData.type || !deviceData.ip) {
+        throw new Error('Missing required fields: name, type, ip');
+    }
+
+    // Generate unique ID
+    const id = `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    const newDevice = {
+        id,
+        name: deviceData.name,
+        type: deviceData.type,
+        icon: deviceData.icon || '📱',
+        ip: deviceData.ip,
+        mac: deviceData.mac || generateRandomMac(),
+        manufacturer: deviceData.manufacturer || 'Custom',
+        powerWatts: deviceData.powerWatts || 0,
+        controllable: deviceData.controllable || false,
+        status: 'online',
+        blocked: false,
+        source: 'custom',
+        servers: deviceData.servers || [],
+        trafficPattern: deviceData.trafficPattern || { min: 10, max: 100, burstChance: 0.1 }
+    };
+
+    customDevices.push(newDevice);
+    saveCustomDevices();
+    return newDevice;
+}
+
+// Add device from catalog
+function addDeviceFromCatalog(templateName) {
+    const template = DEVICE_CATALOG.find(d => d.name === templateName);
+    if (!template) throw new Error('Device template not found');
+
+    const deviceData = {
+        ...template,
+        ip: `192.168.1.${Math.floor(Math.random() * 150) + 100}`, // Random IP
+        mac: generateRandomMac()
+    };
+
+    return addCustomDevice(deviceData);
+}
+
+// Update custom device
+function updateCustomDevice(deviceId, deviceData) {
+    const index = customDevices.findIndex(d => d.id === deviceId);
+    if (index === -1) {
+        throw new Error('Device not found');
+    }
+
+    // Update fields
+    const device = customDevices[index];
+    Object.assign(device, {
+        name: deviceData.name || device.name,
+        type: deviceData.type || device.type,
+        icon: deviceData.icon || device.icon,
+        ip: deviceData.ip || device.ip,
+        mac: deviceData.mac || device.mac,
+        manufacturer: deviceData.manufacturer || device.manufacturer,
+        powerWatts: deviceData.powerWatts !== undefined ? deviceData.powerWatts : device.powerWatts,
+        controllable: deviceData.controllable !== undefined ? deviceData.controllable : device.controllable
+    });
+
+    saveCustomDevices();
+    return device;
+}
+
+// Delete custom device
+function deleteCustomDevice(deviceId) {
+    const index = customDevices.findIndex(d => d.id === deviceId);
+    if (index === -1) {
+        throw new Error('Device not found');
+    }
+
+    customDevices.splice(index, 1);
+    saveCustomDevices();
+    return true;
+}
+
+// Add real device (from network scanner)
+function addRealDevice(deviceData) {
+    const existing = realDevices.find(d => d.ip === deviceData.ip);
+    if (existing) {
+        // Update existing device
+        Object.assign(existing, deviceData);
+    } else {
+        const id = `real-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        realDevices.push({
+            id,
+            source: 'real',
+            status: 'online',
+            blocked: false,
+            ...deviceData
+        });
+    }
+    saveRealDevices();
+}
+
+// Clear real devices
+function clearRealDevices() {
+    realDevices = [];
+    saveRealDevices();
+}
+
+// Generate random MAC address
+function generateRandomMac() {
+    return Array.from({ length: 6 }, () =>
+        Math.floor(Math.random() * 256).toString(16).padStart(2, '0')
+    ).join(':').toUpperCase();
+}
+
+// Merge all device sources
+function mergeDeviceSources() {
+    // Add source field to simulated devices
+    const simulatedWithSource = SIMULATED_DEVICES.map(d => ({ ...d, source: 'simulated' }));
+    return [...simulatedWithSource, ...customDevices, ...realDevices];
+}
+
 // Get device by ID
 function getDevice(deviceId) {
-    return DEVICES.find(d => d.id === deviceId);
+    return mergeDeviceSources().find(d => d.id === deviceId);
 }
 
 // Get all devices
 function getAllDevices() {
-    return DEVICES;
+    return mergeDeviceSources();
 }
 
 // Get online devices
 function getOnlineDevices() {
-    return DEVICES.filter(d => d.status === 'online' && !d.blocked);
+    return mergeDeviceSources().filter(d => d.status === 'online' && !d.blocked);
 }
 
 // Get blocked devices
 function getBlockedDevices() {
-    return DEVICES.filter(d => d.blocked);
+    return mergeDeviceSources().filter(d => d.blocked);
 }
 
 // Get controllable devices
 function getControllableDevices() {
-    return DEVICES.filter(d => d.controllable);
+    return mergeDeviceSources().filter(d => d.controllable);
+}
+
+// Get devices by source
+function getDevicesBySource(source) {
+    return mergeDeviceSources().filter(d => d.source === source);
 }
 
 // Toggle device power (for controllable devices)
 function toggleDevicePower(deviceId) {
     const device = getDevice(deviceId);
-    if (device && device.controllable) {
-        device.status = device.status === 'online' ? 'offline' : 'online';
-        return true;
+    if (!device || !device.controllable) return false;
+
+    // Update in appropriate array
+    if (device.source === 'simulated') {
+        const simDevice = SIMULATED_DEVICES.find(d => d.id === deviceId);
+        if (simDevice) {
+            simDevice.status = simDevice.status === 'online' ? 'offline' : 'online';
+        }
+    } else if (device.source === 'custom') {
+        const customDevice = customDevices.find(d => d.id === deviceId);
+        if (customDevice) {
+            customDevice.status = customDevice.status === 'online' ? 'offline' : 'online';
+            saveCustomDevices();
+        }
+    } else if (device.source === 'real') {
+        const realDevice = realDevices.find(d => d.id === deviceId);
+        if (realDevice) {
+            realDevice.status = realDevice.status === 'online' ? 'offline' : 'online';
+            saveRealDevices();
+        }
     }
-    return false;
+
+    return true;
 }
 
 // Block/unblock device
 function toggleDeviceBlock(deviceId) {
     const device = getDevice(deviceId);
-    if (device) {
-        device.blocked = !device.blocked;
-        return true;
+    if (!device) return false;
+
+    // Update in appropriate array
+    if (device.source === 'simulated') {
+        const simDevice = SIMULATED_DEVICES.find(d => d.id === deviceId);
+        if (simDevice) {
+            simDevice.blocked = !simDevice.blocked;
+        }
+    } else if (device.source === 'custom') {
+        const customDevice = customDevices.find(d => d.id === deviceId);
+        if (customDevice) {
+            customDevice.blocked = !customDevice.blocked;
+            saveCustomDevices();
+        }
+    } else if (device.source === 'real') {
+        const realDevice = realDevices.find(d => d.id === deviceId);
+        if (realDevice) {
+            realDevice.blocked = !realDevice.blocked;
+            saveRealDevices();
+        }
     }
-    return false;
+
+    return true;
 }
 
 // Get total power consumption
 function getTotalPowerConsumption() {
-    return DEVICES
+    return mergeDeviceSources()
         .filter(d => d.status === 'online')
-        .reduce((total, device) => total + device.powerWatts, 0);
+        .reduce((total, device) => total + (device.powerWatts || 0), 0);
 }
 
 // Get random server for a device
@@ -337,3 +639,6 @@ function getRandomServer(device) {
     if (!device.servers || device.servers.length === 0) return null;
     return device.servers[Math.floor(Math.random() * device.servers.length)];
 }
+
+// Initialize on load
+initDeviceStorage();

@@ -1,4 +1,3 @@
-// Traffic Simulation Engine
 // Generates realistic network traffic with plain English descriptions
 
 let trafficLog = [];
@@ -6,6 +5,8 @@ let trafficInterval = null;
 let totalDataTransferred = 0;
 let currentDownloadSpeed = 0;
 let currentUploadSpeed = 0;
+let nextAlertTime = Date.now() + (Math.random() * (120000 - 60000) + 60000); // Random alerting between 60s-120s
+
 
 // Protocol types with plain English descriptions
 const PROTOCOLS = {
@@ -109,7 +110,8 @@ function generateTrafficPacket(device) {
         size: Math.round(size), // KB
         description: description,
         detail: detail,
-        direction: Math.random() > 0.3 ? 'download' : 'upload'
+        direction: Math.random() > 0.3 ? 'download' : 'upload',
+        source_type: 'simulation'
     };
 }
 
@@ -138,6 +140,30 @@ function startTrafficSimulation() {
                         uploadSpeed += packet.size;
                     }
                 }
+            }
+        }
+
+        // Random Security Alert Generation (> 1 minute intervals)
+        if (Date.now() > nextAlertTime) {
+            const onlineDevices = getOnlineDevices().filter(d => !d.blocked);
+            if (onlineDevices.length > 0) {
+                // Pick random device
+                const victim = onlineDevices[Math.floor(Math.random() * onlineDevices.length)];
+
+                // Generate anomaly event
+                const anomalyEvent = new CustomEvent('securityAlert', {
+                    detail: {
+                        type: 'Traffic Spike',
+                        device: victim.name,
+                        deviceId: victim.id,
+                        value: formatBytes(Math.random() * 5000 + 2000), // Random 2MB-7MB
+                        message: `Suspicious outgoing traffic burst detected. Recommended action: Block device immediately.`
+                    }
+                });
+                window.dispatchEvent(anomalyEvent);
+
+                // Schedule next alert (60s - 180s)
+                nextAlertTime = Date.now() + (Math.random() * (180000 - 60000) + 60000);
             }
         }
 
@@ -248,3 +274,5 @@ function getTimeAgo(timestamp) {
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     return `${Math.floor(seconds / 86400)}d ago`;
 }
+
+

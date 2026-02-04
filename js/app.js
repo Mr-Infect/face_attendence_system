@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTrafficPage();
     initAnalyticsPage();
     initDevicesPage();
+    setupSecurityAlerts();
 
     // Start simulations
     startTrafficSimulation();
@@ -232,4 +233,71 @@ window.addEventListener('resize', () => {
 window.addEventListener('beforeunload', () => {
     stopTrafficSimulation();
     stopAnalyticsUpdates();
+    stopTrafficSimulation();
+    stopAnalyticsUpdates();
 });
+
+// Setup Security Alerts
+function setupSecurityAlerts() {
+    const modal = document.getElementById('alertModal');
+    const dismissBtn = document.getElementById('alertDismiss');
+    const blockBtn = document.getElementById('alertBlockBtn');
+    const typeEl = document.getElementById('alertType');
+    const msgEl = document.getElementById('alertMessage');
+
+    let currentAlertDeviceId = null;
+
+    if (!modal) return;
+
+    // Listen for custom security alerts
+    window.addEventListener('securityAlert', (e) => {
+        const { type, device, deviceId, value, message } = e.detail;
+
+        currentAlertDeviceId = deviceId; // Store device ID for blocking
+
+        if (typeEl) typeEl.textContent = `${type} Detected!`;
+        if (msgEl) msgEl.innerHTML = `<strong>${device}</strong> generated <strong>${value}</strong> of traffic.<br>${message}`;
+
+        modal.classList.add('active');
+
+        // Auto dismiss after 15 seconds if not interacted
+        setTimeout(() => {
+            if (modal.classList.contains('active')) {
+                modal.classList.remove('active');
+                currentAlertDeviceId = null;
+            }
+        }, 15000);
+    });
+
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+            currentAlertDeviceId = null;
+        });
+    }
+
+    if (blockBtn) {
+        blockBtn.addEventListener('click', () => {
+            if (currentAlertDeviceId) {
+                toggleDeviceBlock(currentAlertDeviceId);
+                updateTrafficUI();
+                if (currentPage === 'devices') {
+                    renderDeviceGrid();
+                }
+                modal.classList.remove('active');
+                currentAlertDeviceId = null;
+
+                // Show confirmation toast/alert (optional, currently just blocking)
+                alert('Device has been blocked from the network.');
+            }
+        });
+    }
+
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+            currentAlertDeviceId = null;
+        }
+    });
+}

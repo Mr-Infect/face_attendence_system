@@ -14,12 +14,16 @@ let trafficHistory = {
     upload: []
 };
 
+let healthChart = null;
+let healthScoreHistory = [];
+
 // Initialize analytics
 function initAnalytics() {
     initTrafficChart();
     initDeviceTrafficChart();
     initPowerChart();
     initProtocolChart();
+    initHealthChart();
     startAnalyticsUpdates();
 }
 
@@ -239,6 +243,7 @@ function updateCharts() {
     updateDeviceTrafficChart();
     updatePowerChart();
     updateProtocolChart();
+    updateHealthScore();
     updateSummaryStats();
     updateTopDevices();
 }
@@ -296,11 +301,49 @@ function updateProtocolChart() {
 
     const stats = getTrafficStats();
     const protocols = Object.entries(stats.byProtocol);
-
-    protocolChart.data.labels = protocols.map(([protocol]) => protocol);
-    protocolChart.data.datasets[0].data = protocols.map(([, size]) => size);
-    protocolChart.update('none');
+    updateProtocolChart();
+    updateHealthScore();
+    updateSummaryStats();
+    updateTopDevices();
 }
+
+// Update Health Score
+function updateHealthScore() {
+    if (!healthChart) return;
+
+    // Calculate score logic
+    const activeAlerts = document.querySelectorAll('.modal.active').length; // Simple check for active alerts
+    const totalPower = getTotalPowerConsumption();
+    const highLoadDevices = getOnlineDevices().filter(d => d.powerWatts > 200).length;
+
+    let penalty = 0;
+    if (activeAlerts > 0) penalty += 30; // High penalty for active alerts
+    if (totalPower > 2000) penalty += 10;
+    if (highLoadDevices > 2) penalty += (highLoadDevices * 5);
+
+    // Randomize slightly for "AI" feel
+    const variance = Math.floor(Math.random() * 5);
+    let score = Math.max(0, Math.min(100, 100 - penalty - variance));
+
+    // Update Chart
+    healthChart.data.datasets[0].data = [score, 100 - score];
+    healthChart.data.datasets[0].backgroundColor = [
+        score > 80 ? 'rgb(52, 211, 153)' : (score > 50 ? 'rgb(251, 191, 36)' : 'rgb(248, 113, 113)'),
+        'rgba(0,0,0,0.1)'
+    ];
+    healthChart.update('none');
+
+    // Update Text
+    const scoreEl = document.getElementById('healthScoreValue');
+    const statusEl = document.getElementById('healthScoreStatus');
+    if (scoreEl) scoreEl.textContent = `${score}%`;
+    if (statusEl) {
+        statusEl.textContent = score > 80 ? 'Optimal' : (score > 50 ? 'Moderate Risk' : 'Critical Risk');
+        statusEl.style.color = score > 80 ? 'var(--success-color)' : (score > 50 ? 'var(--warning-color)' : 'var(--danger-color)');
+    }
+}
+
+
 
 // Update summary statistics
 function updateSummaryStats() {
